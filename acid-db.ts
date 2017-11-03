@@ -5,20 +5,47 @@
 import * as _ from 'lodash';
 
 
-// Deep unique
-Array.prototype["unique"] = function () {
-    let n = {}, r = [];
+String.prototype['hashCode'] = function(){
+    let hash = 0;
+    if (this.length == 0) return hash;
     for (let i = 0; i < this.length; i++) {
+        let char = this.charCodeAt(i);
+        hash = ((hash<<5)-hash)+char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+};
+
+let rowSignature;
+
+if(Object['values']){
+    console.log("using Object.values");
+    rowSignature = (row, hash)=>{
+        return Object['values'](row).join('.');
+    };
+}else {
+    rowSignature = (row, hash = false)=>{
+        let result:any = JSON.stringify(row);
+        if(hash) result = result.hashCode();
+
+        return result;
+    };
+}
+
+// Deep unique
+function  unique(array, hash = false) {
+    let n = {}, r = [];
+    for (let i = 0; i < array.length; i++) {
         // Use a hash based on the actual data                      in the object, not the object's memory address or instance id
         // This ensures that the objects are truly unique
-        let strRep = JSON.stringify(this[i]);
+        let strRep = rowSignature(array[i], hash);
         if (!n[strRep]) {
             n[strRep] = true;
-            r.push(this[i]);
+            r.push(array[i]);
         }
     }
     return r;
-};
+}
 
 /*
 Array.prototype["unique"] = function () {
@@ -60,11 +87,7 @@ export class DBTable{
      * @return {DBTable}
      */
     distinct(){
-        let results = this._data;
-
-        results = (results as any).unique();
-
-        return new DBTable(results);
+        return new DBTable(unique(this._data));
     }
 
     /**
@@ -172,7 +195,7 @@ export class DBTable{
             return newRow;
         });
 
-        if(distinct) results = (results as any).unique();
+        if(distinct) results = unique((results as any));
 
         return new DBTable(results);
     }
