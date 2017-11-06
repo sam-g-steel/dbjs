@@ -18,3 +18,7 @@ console.log(people.data);
 console.log("\nDoes the table have a person named Bob...");
 let hasBob = people.whereColumnEquals("name" ,"Bob").count;
 console.log(hasBob > 0 ? "true" : "false");
+
+console.log("select 1", people.select("name".split()));
+console.log("select 2", people.select("name".split()));
+console.log(people);

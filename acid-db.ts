@@ -228,6 +228,9 @@ export class DBTable{
                 return newRow;
             });
             if(distinct) result = unique((result as any));
+
+            result = new DBTable(result);
+
             this._writeCache(signature, result);
         }
 

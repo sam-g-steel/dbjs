@@ -216,6 +216,7 @@ var DBTable = (function () {
             });
             if (distinct)
                 result = unique(result);
+            result = new DBTable(result);
             this._writeCache(signature, result);
         }
         return result;
