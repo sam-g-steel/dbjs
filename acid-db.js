@@ -4,6 +4,28 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
+var cacheEntry = (function () {
+    function cacheEntry(dataTable) {
+        this._dataTable = dataTable;
+        this._accessCount = 0;
+    }
+    Object.defineProperty(cacheEntry.prototype, "dataTable", {
+        get: function () {
+            this._accessCount++;
+            return this._dataTable;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(cacheEntry.prototype, "accessCount", {
+        get: function () {
+            return this._accessCount;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return cacheEntry;
+}());
 String.prototype['hashCode'] = function () {
     var hash = 0;
     if (this.length == 0)
@@ -58,6 +80,7 @@ var DBTable = (function () {
     function DBTable(jsonTable) {
         if (jsonTable === void 0) { jsonTable = []; }
         this._data = jsonTable;
+        this._cache = [];
     }
     Object.defineProperty(DBTable.prototype, "count", {
         get: function () {
@@ -179,14 +202,23 @@ var DBTable = (function () {
      */
     DBTable.prototype.select = function (columns, distinct) {
         if (distinct === void 0) { distinct = true; }
-        var results = this._data.map(function (row) {
-            var newRow = {};
-            columns.forEach(function (column) { return newRow[column] = row[column]; });
-            return newRow;
-        });
-        if (distinct)
-            results = unique(results);
-        return new DBTable(results);
+        var result;
+        // Caching
+        var signature = "select-" + distinct + "-columns:" + JSON.stringify(columns);
+        // read from cache
+        result = this._readCache(signature);
+        // Cache miss
+        if (!result) {
+            result = this._data.map(function (row) {
+                var newRow = {};
+                columns.forEach(function (column) { return newRow[column] = row[column]; });
+                return newRow;
+            });
+            if (distinct)
+                result = unique(result);
+            this._writeCache(signature, result);
+        }
+        return result;
     };
     /**
      *
@@ -231,12 +263,43 @@ var DBTable = (function () {
     };
     /**
      *
+     * @param {string} signature
+     * @return {DBTable}
+     * @private
+     */
+    DBTable.prototype._readCache = function (signature) {
+        var results = this._cache[signature];
+        if (results)
+            return results.dataTable || null;
+        return null;
+    };
+    /**
+     *
+     * @param {string} signature
+     * @param {DBTable} dataTable
+     * @private
+     */
+    DBTable.prototype._writeCache = function (signature, dataTable) {
+        this._cache[signature] = new cacheEntry(dataTable);
+    };
+    /**
+     *
      * @param columnName
      * @param value
      * @return {DBTable}
      */
     DBTable.prototype.whereColumnEquals = function (columnName, value) {
-        return new DBTable(this._data.filter(function (row) { return row[columnName] == value; }));
+        var result;
+        // Caching
+        var signature = "whereColumnEquals-" + columnName + ":" + JSON.stringify(value);
+        // read from cache
+        result = this._readCache(signature);
+        // Cache miss
+        if (!result) {
+            result = new DBTable(this._data.filter(function (row) { return row[columnName] == value; }));
+            this._writeCache(signature, result);
+        }
+        return result;
     };
     /**
      *
@@ -245,7 +308,17 @@ var DBTable = (function () {
      * @return {DBTable}
      */
     DBTable.prototype.whereColumnNotEquals = function (columnName, value) {
-        return new DBTable(this._data.filter(function (row) { return row[columnName] != value; }));
+        var result;
+        // Caching
+        var signature = "whereColumnNotEquals-" + columnName + ":" + JSON.stringify(value);
+        // read from cache
+        result = this._readCache(signature);
+        // Cache miss
+        if (!result) {
+            result = new DBTable(this._data.filter(function (row) { return row[columnName] != value; }));
+            this._writeCache(signature, result);
+        }
+        return result;
     };
     return DBTable;
 }());

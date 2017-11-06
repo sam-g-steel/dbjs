@@ -5,6 +5,25 @@
 import * as _ from 'lodash';
 
 
+class cacheEntry{
+    private _accessCount: number;
+    private _dataTable: DBTable;
+
+    constructor(dataTable){
+        this._dataTable = dataTable;
+        this._accessCount = 0;
+    }
+
+    get dataTable() : DBTable{
+        this._accessCount++;
+        return this._dataTable;
+    }
+
+    get accessCount() : number{
+        return this._accessCount;
+    }
+}
+
 String.prototype['hashCode'] = function(){
     let hash = 0;
     if (this.length == 0) return hash;
@@ -54,6 +73,7 @@ Array.prototype["unique"] = function () {
 
 export class DBTable{
     private _data: any[];
+    private _cache: cacheEntry[];
 
     /**
      *
@@ -61,7 +81,9 @@ export class DBTable{
      */
     constructor(jsonTable: any[] = []){
         this._data = jsonTable;
+        this._cache = [];
     }
+
 
     get count(){
         if(!this._data){
@@ -188,16 +210,28 @@ export class DBTable{
      * @return {DBTable}
      */
     select(columns : string[], distinct : boolean = true){
-        let results = this._data.map((row)=>{
-            let newRow = {};
-            columns.forEach(column => newRow[column] = row[column]);
 
-            return newRow;
-        });
+        let result;
 
-        if(distinct) results = unique((results as any));
+        // Caching
+        let signature = `select-${distinct}-columns:${JSON.stringify(columns)}`;
 
-        return new DBTable(results);
+        // read from cache
+        result = this._readCache(signature);
+
+        // Cache miss
+        if(!result) {
+            result = this._data.map((row)=>{
+                let newRow = {};
+                columns.forEach(column => newRow[column] = row[column]);
+
+                return newRow;
+            });
+            if(distinct) result = unique((result as any));
+            this._writeCache(signature, result);
+        }
+
+        return result;
     }
 
     /**
@@ -242,6 +276,29 @@ export class DBTable{
         return new DBTable(results);
     }
 
+
+    /**
+     *
+     * @param {string} signature
+     * @return {DBTable}
+     * @private
+     */
+    private _readCache(signature:string):DBTable{
+        let results = this._cache[signature];
+        if(results) return results.dataTable || null;
+        return null;
+    }
+
+    /**
+     *
+     * @param {string} signature
+     * @param {DBTable} dataTable
+     * @private
+     */
+    private _writeCache(signature:string, dataTable:DBTable){
+        this._cache[signature] = new cacheEntry(dataTable);
+    }
+
     /**
      *
      * @param columnName
@@ -249,7 +306,21 @@ export class DBTable{
      * @return {DBTable}
      */
     whereColumnEquals(columnName : string, value : number | string){
-        return new DBTable(this._data.filter(row => row[columnName] == value));
+        let result;
+
+        // Caching
+        let signature = `whereColumnEquals-${columnName}:${JSON.stringify(value)}`;
+
+        // read from cache
+        result = this._readCache(signature);
+
+        // Cache miss
+        if(!result) {
+            result = new DBTable(this._data.filter(row => row[columnName] == value));
+            this._writeCache(signature, result);
+        }
+
+        return result;
     }
 
     /**
@@ -259,6 +330,21 @@ export class DBTable{
      * @return {DBTable}
      */
     whereColumnNotEquals(columnName : string, value : number | string){
-        return new DBTable(this._data.filter(row => row[columnName] != value));
+
+        let result;
+
+        // Caching
+        let signature = `whereColumnNotEquals-${columnName}:${JSON.stringify(value)}`;
+
+        // read from cache
+        result = this._readCache(signature);
+
+        // Cache miss
+        if(!result) {
+            result = new DBTable(this._data.filter(row => row[columnName] != value));
+            this._writeCache(signature, result);
+        }
+
+        return result;
     }
 }
