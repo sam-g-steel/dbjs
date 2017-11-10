@@ -1,6 +1,8 @@
-let {DBTable} = require("../acid-db");
+let {DBTable} = require("../lib/acid-db");
+let {CachingDBTable} = require("../lib/CachingDBTable");
 
-let people = new DBTable([
+
+let people = new CachingDBTable([
     {name: "Bob", age: 57},
     {name: "Douglas", age: 42},
     {name: "Computer", age: 7000000},
