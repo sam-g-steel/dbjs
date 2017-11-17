@@ -24,3 +24,4 @@ console.log(hasBob > 0 ? "true" : "false");
 console.log("select 1", people.select("name".split()));
 console.log("select 2", people.select("name".split()));
 console.log(people);
+console.log(people.toLZMAStringB64());

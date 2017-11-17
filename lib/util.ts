@@ -45,3 +45,24 @@ export function uniqueRows(array: any[], hash:boolean = false) {
     }
     return r;
 }
+
+export function Uint8ToString(u8a) : string{
+    // from... https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string
+    let CHUNK_SZ = 0x8000;
+    let c = [];
+    for (let i=0; i < u8a.length; i+=CHUNK_SZ) {
+        c.push(String.fromCharCode.apply(null, u8a.subarray(i, i+CHUNK_SZ)));
+    }
+    return c.join("");
+}
+
+export function StringToUint8(string : string){
+    // from... https://jsperf.com/string-to-uint8array
+
+    let uint = new Uint8Array(string.length);
+    for(let i=0,j=string.length;i<j;++i){
+        uint[i]=string.charCodeAt(i);
+    }
+
+    return uint;
+}

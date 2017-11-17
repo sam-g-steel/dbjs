@@ -1,5 +1,26 @@
-import { uniqueRows } from './util';
+import { uniqueRows, Uint8ToString, StringToUint8 } from './util';
 import * as _ from 'lodash';
+import * as LZMA_LIBc from "lzma/src/lzma-c";
+import * as LZMA_LIBd from "lzma/src/lzma-d";
+
+const isBrowser = this.window === this;
+
+let LZMA = {
+        compress: LZMA_LIBc.LZMA.compress,
+        decompress: LZMA_LIBd.LZMA.decompress
+    };
+
+let btoa;
+let atob;
+
+if(!isBrowser){
+    btoa = require("btoa");
+    atob = require("atob");
+}else {
+    btoa = window.btoa;
+    atob = window.atob;
+}
+
 
 export class DBTable{
     protected _data: any[];
@@ -13,6 +34,7 @@ export class DBTable{
     }
 
     get currentConstructor(){
+        if(this["__proto__"].constructor) return this["__proto__"].constructor;
         return (this as any).prototype.constructor;
     }
 
@@ -206,4 +228,39 @@ export class DBTable{
     whereColumnNotEquals(columnName : string, value : number | string){
         return new this.currentConstructor(this._data.filter(row => row[columnName] != value));
     }
+
+    loadJson(json:string){
+        json = JSON.parse(json);
+        return new this.currentConstructor(json);
+    }
+
+    loadLZMA(lzma : number[]){
+        let json = LZMA.decompress(lzma);
+        return this.loadJson(json);
+    }
+
+    loadLZMAStringB64(string : string){
+        let lzma = atob(string);
+        lzma = StringToUint8(lzma);
+        lzma = Array["from"](lzma);
+
+        return this.loadLZMA(lzma);
+    }
+
+    toJSON(pretty : number = 2){
+        return JSON.stringify(this._data, null, pretty as any);
+    }
+
+    toLZMA(compression : number = 1) : number[]{
+        let json = this.toJSON(0);
+        return LZMA.compress(json, compression);
+    }
+
+    toLZMAStringB64(compression : number = 1):string{
+        let lzma = this.toLZMA(compression);
+        let u8 = new Uint8Array(lzma);
+        return btoa(Uint8ToString(u8));
+    }
+
+
 }
