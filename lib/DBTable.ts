@@ -44,7 +44,8 @@ export class DBTable{
     }
 
     get data(){
-        return this._data.map(row=>row);
+        //return this._data.slice(0);
+        return [...this._data];
     }
 
 
