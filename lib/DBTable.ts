@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 import * as LZMA_LIBc from "lzma/src/lzma-c";
 import * as LZMA_LIBd from "lzma/src/lzma-d";
 
-const isBrowser = this.window === this;
 
 let LZMA = {
         compress: LZMA_LIBc.LZMA.compress,
@@ -13,7 +12,7 @@ let LZMA = {
 let btoa;
 let atob;
 
-if(!isBrowser){
+if(typeof atob === "undefined"){
     btoa = require("btoa");
     atob = require("atob");
 }else {
