@@ -169,12 +169,12 @@ export class DBTable{
 
     /**
      *
-     * @param {string} columnName
+     * @param {string} column
      * @param value
      * @return {DBTable}
      */
-    setColumn(columnName : string, value : any){
-        this._data.forEach(row=>row[columnName] = value);
+    setColumn(column : string, value : any){
+        this._data.forEach(row=>row[column] = value);
         return this;
     }
 
@@ -191,13 +191,13 @@ export class DBTable{
 
     /**
      *
-     * @param columnName
-     * @param value
-     * @return {DBTable}
+     * @param {string} column
+     * @param {number | string} value
+     * @param {boolean} caseSensitive
      */
-    whereColumnContains(columnName : string, value : number | string, caseSensitive: boolean = true){
+    whereColumnContains(column : string, value : number | string, caseSensitive: boolean = true){
         let results = this._data.filter(row =>{
-            let columnValue = row[columnName];
+            let columnValue = row[column];
             if(typeof columnValue !== "string") return false;
             if(caseSensitive) return (columnValue as any).includes(value);
             else{
@@ -211,22 +211,62 @@ export class DBTable{
 
     /**
      *
-     * @param columnName
+     * @param column
      * @param value
      * @return {DBTable}
      */
-    whereColumnEquals(columnName : string, value : number | string){
-        return new this.currentConstructor(this._data.filter(row => row[columnName] == value));
+    whereColumnEquals(column : string, value : number | string){
+        return new this.currentConstructor(this._data.filter(row => row[column] == value));
     }
 
     /**
      *
-     * @param columnName
+     * @param column
      * @param value
      * @return {DBTable}
      */
-    whereColumnNotEquals(columnName : string, value : number | string){
-        return new this.currentConstructor(this._data.filter(row => row[columnName] != value));
+    whereColumnNotEquals(column : string, value : number | string){
+        return new this.currentConstructor(this._data.filter(row => row[column] != value));
+    }
+
+    /**
+     *
+     * @param {string} column
+     * @param {number | string} value
+     * @return {this}
+     */
+    whereColumnGreaterThanEquals(column : string, value : number | string) : this{
+        return new this.currentConstructor(this._data.filter(row => row[column] >= value));
+    }
+
+    /**
+     *
+     * @param {string} column
+     * @param {number | string} value
+     * @return {this}
+     */
+    whereColumnLessThanEquals(column : string, value : number | string) : this{
+        return new this.currentConstructor(this._data.filter(row => row[column] <= value));
+    }
+
+    /**
+     *
+     * @param {string} column
+     * @param {number | string} value
+     * @return {this}
+     */
+    whereColumnGreaterThan(column : string, value : number | string) : this{
+        return new this.currentConstructor(this._data.filter(row => row[column] > value));
+    }
+
+    /**
+     *
+     * @param {string} column
+     * @param {number | string} value
+     * @return {this}
+     */
+    whereColumnLessThan(column : string, value : number | string) : this{
+        return new this.currentConstructor(this._data.filter(row => row[column] < value));
     }
 
     loadJson(json:string){
