@@ -2,7 +2,7 @@ import {DBTable} from './DBTable';
 
 
 
-class cacheEntry {
+export class cacheEntry {
     private _accessCount: number;
     private _dataTable: DBTable;
 
