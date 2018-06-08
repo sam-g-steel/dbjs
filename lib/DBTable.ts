@@ -122,17 +122,19 @@ export class DBTable{
     orderBy(column: string, order : "ASC" | "DESC" = "ASC"){
         let factor = order.toLowerCase() === "asc" ? 1 : -1;
 
-        let newData = this.data.sort((a, b)=>{
-            let aValue=a[column], bValue=b[column];
-            if(typeof aValue === "string") aValue = aValue.toLowerCase();
-            if(typeof bValue === "string") bValue = bValue.toLowerCase();
+        // this.data.sort((a, b)=>{
+        //     let aValue=a[column], bValue=b[column];
+        //     if(typeof aValue === "string") aValue = aValue.toLowerCase(); // Why to lower?
+        //     if(typeof bValue === "string") bValue = bValue.toLowerCase();
+        //
+        //     if (aValue < bValue) //sort string ascending
+        //         return -factor;
+        //     if (aValue > bValue)
+        //         return factor;
+        //     return 0 //default return value (no sorting)
+        // });
 
-            if (aValue < bValue) //sort string ascending
-                return -factor;
-            if (aValue > bValue)
-                return factor;
-            return 0 //default return value (no sorting)
-        });
+        let newData = _.orderBy(this.data, [column], [order]);
 
         return new this.currentConstructor(newData);
     }
