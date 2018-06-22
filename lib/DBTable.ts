@@ -134,7 +134,7 @@ export class DBTable{
         //     return 0 //default return value (no sorting)
         // });
 
-        let newData = _.orderBy(this.data, [column], [order]);
+        let newData = _.orderBy(this.data, [column], [order.toLowerCase()]);
 
         return new this.currentConstructor(newData);
     }

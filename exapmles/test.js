@@ -17,6 +17,10 @@ console.log("\nSort By Name...", "DESC");
 people = people.orderBy("name", "DESC");
 console.log(people.data);
 
+console.log("\nSort By Name...", "ASC");
+people = people.orderBy("name", "ASC");
+console.log(people.data);
+
 console.log("\nDoes the table have a person named Bob...");
 let hasBob = people.whereColumnEquals("name" ,"Bob").count;
 console.log(hasBob > 0 ? "true" : "false");
