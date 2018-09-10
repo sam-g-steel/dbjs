@@ -2,6 +2,9 @@
 
 # Releases
 
+**0.4.0**
+ + Added class DBFilter
+
 **0.3.4**
  + DBTable.OrderBy now uses a stable sort
 
