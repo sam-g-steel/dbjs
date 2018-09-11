@@ -3,11 +3,11 @@
   "version": "0.4.0-alpha",
   "main": "./lib/acid-db.js",
   "dependencies": {
-    "@types/lodash": "^4.14.77",
+    "@types/lodash": "^4.14.116",
     "@types/node": "^9.4.6",
     "atob": "^2.0.3",
     "btoa": "^1.1.2",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.10",
     "lzma": "^2.3.2"
   }
 }

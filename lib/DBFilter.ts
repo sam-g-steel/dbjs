@@ -36,9 +36,9 @@ export class DBFilter {
      * @param {string} text
      * @return {this}
      */
-    public setField(fieldName:string, value: string | number, text: string = value.toString()){
+    public setField(fieldName:string, value: string | number, text: string = ''+value) {
         // Make sure
-        if(!fieldName){
+        if (!fieldName) {
             console.error("fieldName must have a value!");
             return this;
         }
@@ -46,21 +46,14 @@ export class DBFilter {
         // Create new DBFilter
         let result = this._clone();
 
-        // If the new value is undefined remove it from the filter
-        if(value === undefined){
-            delete result._map[fieldName];
-        }
-
         // Set the field to the new value
-        else {
-            result._map[fieldName] = {fieldName, text, value};
-        }
+        result._map[fieldName] = {fieldName, text, value};
 
         // Return new filter
-        if(result.toString() === this.toString()){
+        if (result.toString() === this.toString()) {
             // Return the current filter if it is the same as the new one
             return this;
-        }else {
+        } else {
             // Otherwise, return the new filter
             return result;
         }
@@ -99,7 +92,9 @@ export class DBFilter {
 
         //
         for(let entry of entries){
-            result[entry.fieldName] = entry.value;
+            if(entry.value !== undefined) {
+                result[entry.fieldName] = entry.value;
+            }
         }
 
         return result;
