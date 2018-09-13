@@ -26,6 +26,9 @@ export declare class DBFilter {
      * @return {string}
      */
     toString(): string;
-    toBasicFilter(): {};
+    toBasicFilter(): any;
+    getEntry(fieldName: string): DBFilterEntry;
+    getEntriesAsObject(): any;
+    getEntriesAsArray(): DBFilterEntry[];
     toBasicString(): string;
 }

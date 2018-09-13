@@ -36,11 +36,15 @@ export class DBFilter {
      * @param {string} text
      * @return {this}
      */
-    public setField(fieldName:string, value: string | number, text: string = ''+value) {
+    public setField(fieldName:string, value: string | number, text?: string) {
         // Make sure
         if (!fieldName) {
             console.error("fieldName must have a value!");
             return this;
+        }
+
+        if(text === undefined && value !== undefined){
+            text = "" + value;
         }
 
         // Create new DBFilter
@@ -85,7 +89,7 @@ export class DBFilter {
         return JSON.stringify(this._map);
     }
 
-    public toBasicFilter(){
+    public toBasicFilter() : any{
         //
         const entries = Object.values(this._map) as DBFilterEntry[];
         const result = {};
@@ -98,6 +102,18 @@ export class DBFilter {
         }
 
         return result;
+    }
+
+    public getEntry(fieldName:string) : DBFilterEntry{
+        return this._map[fieldName];
+    }
+
+    public getEntriesAsObject(){
+        return {...this._map};
+    }
+
+    public getEntriesAsArray(){
+        return Object.values(this._map) as DBFilterEntry[];
     }
 
     public toBasicString(){
