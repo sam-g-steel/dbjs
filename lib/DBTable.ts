@@ -37,7 +37,9 @@ export class DBTable{
         return (this as any).prototype.constructor;
     }
 
-
+    /**
+     * Number of rows in the table
+     */
     get count(){
         return this._data.length;
     }
@@ -46,7 +48,6 @@ export class DBTable{
         //return this._data.slice(0);
         return [...this._data];
     }
-
 
     /**
      *
@@ -59,7 +60,7 @@ export class DBTable{
     /**
      *
      * @param {string} columnName
-     * @param amount
+     * @param amount defaults to 1
      * @return {DBTable}
      */
     incrementColumn(columnName : string, amount : any = 1){
@@ -74,11 +75,29 @@ export class DBTable{
     }
 
     /**
-     *
+     * @deprecated see union() instead
      * @param {DBTable} table
      */
     insert(table : DBTable){
         return new this.currentConstructor(_.union(this._data, table._data));
+    }
+
+    /**
+     * Unions current data with data that is passed in
+     * @returns a new DBTable with the 'unioned' data
+     * @param data - can be a DBTable, a row from a table, or an array of rows
+     */
+    union(data : DBTable | object[] | object)
+    {
+        let finalData : any[];
+        if(data instanceof DBTable){
+            finalData = data._data
+        }else if(typeof data === "object"){
+            finalData = [data];
+        }else{
+            finalData = data;
+        }
+        return new this.currentConstructor(_.union(this._data, finalData));
     }
 
     /**
@@ -106,7 +125,7 @@ export class DBTable{
             }else {
                 let insertIndex = results._data.indexOf(rowCollisionData.data[0]);
 
-                results._data[insertIndex] = row;
+                results._data[insertIndex] = {...results._data[insertIndex], ...row};
             }
         });
 
@@ -116,23 +135,11 @@ export class DBTable{
     /**
      *
      * @param {string} column
-     * @param {"ASC" | "DESC"} order
+     * @param {"ASC" | "DESC"} order defaults to "ASC"
      * @return {DBTable}
      */
     orderBy(column: string, order : "ASC" | "DESC" = "ASC"){
         let factor = order.toLowerCase() === "asc" ? 1 : -1;
-
-        // this.data.sort((a, b)=>{
-        //     let aValue=a[column], bValue=b[column];
-        //     if(typeof aValue === "string") aValue = aValue.toLowerCase(); // Why to lower?
-        //     if(typeof bValue === "string") bValue = bValue.toLowerCase();
-        //
-        //     if (aValue < bValue) //sort string ascending
-        //         return -factor;
-        //     if (aValue > bValue)
-        //         return factor;
-        //     return 0 //default return value (no sorting)
-        // });
 
         let newData = _.orderBy(this.data, [column], [order.toLowerCase()]);
 
@@ -152,7 +159,7 @@ export class DBTable{
     /**
      *
      * @param {string[]} columns
-     * @param {boolean} distinct
+     * @param {boolean} distinct defaults to true
      * @return {DBTable}
      */
     select(columns : string[], distinct : boolean = true){
@@ -178,6 +185,25 @@ export class DBTable{
     setColumn(column : string, value : any){
         this._data.forEach(row=>row[column] = value);
         return this;
+    }
+
+    /**
+     * This is an experimental feature
+     * @experimental
+     * @param columnName
+     */
+    public listDistinctValues(columnName: string){
+        const rowsToProcess = this.select([columnName]);
+        const resultsTable = new DBTable;
+
+        //
+        rowsToProcess._data.forEach((row)=>{
+            let values = row[columnName].split(",");
+
+            values.forEach(value=>resultsTable._data.push({value}));
+        });
+
+        return resultsTable.distinct();
     }
 
     /**
@@ -271,9 +297,21 @@ export class DBTable{
         return new this.currentConstructor(this._data.filter(row => row[column] < value));
     }
 
+    /***
+     * @deprecated This function may be removed or behave differently in future releases.
+     * Use DBTable.fromJson(...) instead.
+     */
     loadJson(json:string){
         json = JSON.parse(json);
         return new this.currentConstructor(json);
+    }
+
+    /***
+     *
+     */
+    public static fromJson(json:string){
+        const data = JSON.parse(json);
+        return new DBTable(data);
     }
 
     loadLZMA(lzma : number[]){
@@ -303,6 +341,4 @@ export class DBTable{
         let u8 = new Uint8Array(lzma);
         return btoa(Uint8ToString(u8));
     }
-
-
 }

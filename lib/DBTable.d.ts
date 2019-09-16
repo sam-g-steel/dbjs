@@ -6,6 +6,9 @@ export declare class DBTable {
      */
     constructor(jsonTable?: any[]);
     readonly currentConstructor: any;
+    /**
+     * Number of rows in the table
+     */
     readonly count: number;
     readonly data: any[];
     /**
@@ -16,15 +19,21 @@ export declare class DBTable {
     /**
      *
      * @param {string} columnName
-     * @param amount
+     * @param amount defaults to 1
      * @return {DBTable}
      */
     incrementColumn(columnName: string, amount?: any): this;
     /**
-     *
+     * @deprecated see union() instead
      * @param {DBTable} table
      */
     insert(table: DBTable): any;
+    /**
+     * Unions current data with data that is passed in
+     * @returns a new DBTable with the 'unioned' data
+     * @param data - can be a DBTable, a row from a table, or an array of rows
+     */
+    union(data: DBTable | object[] | object): any;
     /**
      *
      * @param {DBTable} table
@@ -36,7 +45,7 @@ export declare class DBTable {
     /**
      *
      * @param {string} column
-     * @param {"ASC" | "DESC"} order
+     * @param {"ASC" | "DESC"} order defaults to "ASC"
      * @return {DBTable}
      */
     orderBy(column: string, order?: "ASC" | "DESC"): any;
@@ -49,7 +58,7 @@ export declare class DBTable {
     /**
      *
      * @param {string[]} columns
-     * @param {boolean} distinct
+     * @param {boolean} distinct defaults to true
      * @return {DBTable}
      */
     select(columns: string[], distinct?: boolean): any;
@@ -60,6 +69,12 @@ export declare class DBTable {
      * @return {DBTable}
      */
     setColumn(column: string, value: any): this;
+    /**
+     * This is an experimental feature
+     * @experimental
+     * @param columnName
+     */
+    listDistinctValues(columnName: string): any;
     /**
      *
      * @param {number} count
@@ -115,7 +130,15 @@ export declare class DBTable {
      * @return {this}
      */
     whereColumnLessThan(column: string, value: number | string): this;
+    /***
+     * @deprecated This function may be removed or behave differently in future releases.
+     * Use DBTable.fromJson(...) instead.
+     */
     loadJson(json: string): any;
+    /***
+     *
+     */
+    static fromJson(json: string): DBTable;
     loadLZMA(lzma: number[]): any;
     loadLZMAStringB64(string: string): any;
     toJSON(pretty?: number): string;

@@ -1,7 +1,8 @@
 {
   "name": "acid-db",
-  "version": "0.4.0-beta",
-  "main": "./lib/acid-db.js",
+  "version": "0.4.0",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "dependencies": {
     "@types/lodash": "^4.14.116",
     "@types/node": "^9.4.6",
@@ -9,5 +10,9 @@
     "btoa": "^1.1.2",
     "lodash": "^4.17.10",
     "lzma": "^2.3.2"
-  }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "license": "MIT"
 }

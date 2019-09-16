@@ -40,12 +40,12 @@ export declare class CachingDBTable extends DBTable {
      * @return {DBTable}
      * @private
      */
-    private _readCache(signature);
+    private _readCache;
     /**
      *
      * @param {string} signature
      * @param {DBTable} dataTable
      * @private
      */
-    private _writeCache(signature, dataTable);
+    private _writeCache;
 }

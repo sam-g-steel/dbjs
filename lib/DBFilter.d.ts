@@ -11,7 +11,7 @@ export interface DBFilterEntry {
  */
 export declare class DBFilter {
     private _map;
-    private _clone();
+    private _clone;
     /**
      *
      * @param {string} fieldName

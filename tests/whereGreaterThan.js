@@ -1,5 +1,4 @@
-let {DBTable} = require("../lib/acid-db");
-//let {DBTable} = require("../lib/DBTable");
+let {DBTable} = require("../lib");
 
 const testCount = 2;
 let successCount = 0;
