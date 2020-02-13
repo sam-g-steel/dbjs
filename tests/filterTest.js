@@ -1,4 +1,4 @@
-const {DBFilter} = require("../lib/DBFilter");
+const {DBFilter} = require("../lib");
 
 const filter1 = new DBFilter();
 const filter2 = filter1.setField("age", 45);

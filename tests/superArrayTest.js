@@ -14,12 +14,13 @@ try {
     ]);
     console.log("data created...");
 
-    const tags = allData.listDistinctValues("tags");
+    const superArrays = allData.toSuperArrays();
+    const newTable = DBTable.fromSuperArrays(superArrays);
 
-    if(tags.count){
+
+    if(superArrays){
         successCount ++;
-        console.log("Tags... ", tags.data);
-        console.log("Tags... ", tags.data.map(x=>x.value).join(", "));
+        console.log("superArrays... ", superArrays);
         console.log("\nTest Passed!");
     }
 

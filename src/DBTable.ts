@@ -2,6 +2,7 @@ import { uniqueRows, Uint8ToString, StringToUint8 } from './util';
 import * as _ from 'lodash';
 import * as LZMA_LIBc from "lzma/src/lzma-c";
 import * as LZMA_LIBd from "lzma/src/lzma-d";
+import {SuperArray} from "./SuperArray";
 
 
 let LZMA = {
@@ -163,7 +164,7 @@ export class DBTable{
      * @return {DBTable}
      */
     select(columns : string[], distinct : boolean = true){
-
+        // Todo: change distinct to require a value in version 0.6.x and default to false in 1.x.x
         let result = this._data.map((row)=>{
             let newRow = {};
             columns.forEach(column => newRow[column] = row[column]);
@@ -200,7 +201,18 @@ export class DBTable{
         rowsToProcess._data.forEach((row)=>{
             let values = row[columnName].split(",");
 
-            values.forEach(value=>resultsTable._data.push({value}));
+            values.forEach(value=>{
+                // Has this value already been registered? If so increment its count
+                const alreadyRegistered = resultsTable
+                    .whereColumnEquals("value", value)
+                    .incrementColumn("count")
+                    .count;
+
+                // Otherwise add it to the list
+                if(!alreadyRegistered){
+                    resultsTable._data.push({value, count: 1});
+                }
+            });
         });
 
         return resultsTable.distinct();
@@ -243,7 +255,7 @@ export class DBTable{
      * @param value
      * @return {DBTable}
      */
-    whereColumnEquals(column : string, value : number | string){
+    whereColumnEquals(column : string, value : any){
         return new this.currentConstructor(this._data.filter(row => row[column] == value));
     }
 
@@ -253,7 +265,7 @@ export class DBTable{
      * @param value
      * @return {DBTable}
      */
-    whereColumnNotEquals(column : string, value : number | string){
+    whereColumnNotEquals(column : string, value : any){
         return new this.currentConstructor(this._data.filter(row => row[column] != value));
     }
 
@@ -329,6 +341,52 @@ export class DBTable{
 
     toJSON(pretty : number = 2){
         return JSON.stringify(this._data, null, pretty as any);
+    }
+
+    /**
+     *
+     */
+    toSuperArrays(){
+        const columns = Object.keys(this._data[0]);
+        const result:any = {};
+
+        // loop through columns
+        for(const columnName of columns){
+            const column = [];
+
+            // loop through rows
+            for(const row of this._data){
+                column.push(row[columnName])
+            }
+
+            result[columnName] = new SuperArray(column);
+        }
+
+        return result;
+    }
+
+    /**
+     *
+     * @param input
+     */
+    static fromSuperArrays(input) {
+        const columns = Object.keys(input);
+        const { length } = input[columns[0]];
+        const data: any = [];
+
+        // loop through rows
+        for (let i=0; i < length; i++) {
+            const row: any = {};
+
+            // loop through columns
+            for (const columnName of columns) {
+                row[columnName] = input[columnName][i];
+            }
+
+            data.push(row);
+        }
+
+        return new DBTable(data)
     }
 
     toLZMA(compression : number = 1) : number[]{

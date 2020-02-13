@@ -2,6 +2,9 @@
 
 # Releases
 
+**0.5.1**
+ + Improved docs
+
 **0.4.0**
  + Added class DBFilter
 

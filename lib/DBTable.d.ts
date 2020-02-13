@@ -94,14 +94,14 @@ export declare class DBTable {
      * @param value
      * @return {DBTable}
      */
-    whereColumnEquals(column: string, value: number | string): any;
+    whereColumnEquals(column: string, value: any): any;
     /**
      *
      * @param column
      * @param value
      * @return {DBTable}
      */
-    whereColumnNotEquals(column: string, value: number | string): any;
+    whereColumnNotEquals(column: string, value: any): any;
     /**
      *
      * @param {string} column
@@ -142,6 +142,15 @@ export declare class DBTable {
     loadLZMA(lzma: number[]): any;
     loadLZMAStringB64(string: string): any;
     toJSON(pretty?: number): string;
+    /**
+     *
+     */
+    toSuperArrays(): any;
+    /**
+     *
+     * @param input
+     */
+    static fromSuperArrays(input: any): DBTable;
     toLZMA(compression?: number): number[];
     toLZMAStringB64(compression?: number): string;
 }
