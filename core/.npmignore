@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+#/lib/acid-db.ts
+#/lib/CachingDBTable.ts
+#/lib/DBTable.ts
+#/lib/util.ts
+
+src
+tests

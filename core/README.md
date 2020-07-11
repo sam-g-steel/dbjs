@@ -1,4 +1,4 @@
-# acid-db
+# @dbjs/core previously acid-db
 
 # Releases
 
@@ -16,3 +16,7 @@
 
 **0.3.1**
  + Added typeScript Support
+
+#TODO
++ Add support for custom row decoding
++ Add support for custom row filtering

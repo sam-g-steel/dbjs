@@ -1,8 +1,10 @@
 import { uniqueRows, Uint8ToString, StringToUint8 } from './util';
-import * as _ from 'lodash';
 import * as LZMA_LIBc from "lzma/src/lzma-c";
 import * as LZMA_LIBd from "lzma/src/lzma-d";
 import {SuperArray} from "./SuperArray";
+import {getColumnType} from "./ColumnType";
+import { orderBy, union } from 'lodash';
+import { v4 as uuid } from 'uuid';
 
 
 let LZMA = {
@@ -17,25 +19,68 @@ if(typeof atob === "undefined"){
     btoa = require("btoa");
     atob = require("atob");
 }else {
-    btoa = window.btoa;
-    atob = window.atob;
+    // @ts-ignore
+    btoa = window.btoa; atob = window.atob;
 }
 
 
-export class DBTable{
-    protected _data: any[];
+export class DBTable<rowInterface>{
+    protected _data: rowInterface[];
+    protected _meta = {
+        columnNames: [] as string[],
+        columnTypes: {} as any,
+    };
+    protected _instanceID = uuid();
 
     /**
      *
      * @param {any[]} jsonTable
      */
-    constructor(jsonTable: any[] = []){
+    constructor(jsonTable: any[] = [], metaData?: any){
+        this._meta = {...metaData};
         this._data = jsonTable;
     }
 
     get currentConstructor(){
         if(this["__proto__"].constructor) return this["__proto__"].constructor;
         return (this as any).prototype.constructor;
+    }
+
+    getColumnTypes() {
+        if(!this._meta.columnTypes) {
+            const columns: any = {};
+            for (const row of this._data) {
+                Object.keys(row).forEach(column => {
+                    columns[column] = getColumnType(row[column]);
+                });
+            }
+            this._meta.columnTypes = columns;
+        }
+
+        return this._meta.columnTypes;
+    }
+
+    getColumnNames(){
+        if(!this._meta.columnNames || this._meta.columnNames.length === 0){
+            this._meta.columnNames = Object.keys(this.getColumnTypes()).sort((a, b)=> a>b? 1 : -1);
+        }
+
+        return this._meta.columnNames;
+    }
+
+    updateMeta(){
+        const oldMeta = this._meta;
+        this._meta = {} as any;
+
+        // This will create new meta entries for column names and types
+        this.getColumnNames();
+
+        // merge the old meta into the new
+        this._meta = {
+            columnNames: undefined,
+            columnTypes: {...this._meta.columnTypes, ...oldMeta.columnTypes},
+        };
+        this.getColumnNames();
     }
 
     /**
@@ -45,7 +90,7 @@ export class DBTable{
         return this._data.length;
     }
 
-    get data(){
+    get data(): rowInterface[]{
         //return this._data.slice(0);
         return [...this._data];
     }
@@ -55,7 +100,7 @@ export class DBTable{
      * @return {DBTable}
      */
     distinct(){
-        return new this.currentConstructor(uniqueRows(this._data));
+        return new this.currentConstructor(uniqueRows(this._data), this._meta);
     }
 
     /**
@@ -79,8 +124,9 @@ export class DBTable{
      * @deprecated see union() instead
      * @param {DBTable} table
      */
-    insert(table : DBTable){
-        return new this.currentConstructor(_.union(this._data, table._data));
+    insert(table : DBTable<rowInterface>){
+        console.error("deprecated use union() instead");
+        return new this.currentConstructor(union(this._data, table._data));
     }
 
     /**
@@ -88,17 +134,30 @@ export class DBTable{
      * @returns a new DBTable with the 'unioned' data
      * @param data - can be a DBTable, a row from a table, or an array of rows
      */
-    union(data : DBTable | object[] | object)
+    union(data : DBTable<any> | object[] | object)
     {
+        let metaData = undefined as any;
         let finalData : any[];
+
         if(data instanceof DBTable){
-            finalData = data._data
+            finalData = data._data;
+            metaData = {...this._meta, ...data._meta};
+            // merge the old meta into the new
+            this._meta = {
+                columnNames: undefined,
+                columnTypes: {...this._meta.columnTypes, ...data._meta.columnTypes},
+            };
+            this.getColumnNames();
         }else if(typeof data === "object"){
             finalData = [data];
         }else{
             finalData = data;
         }
-        return new this.currentConstructor(_.union(this._data, finalData));
+
+        return new this.currentConstructor(
+            union(this._data, finalData),
+            metaData
+        );
     }
 
     /**
@@ -108,8 +167,11 @@ export class DBTable{
      * @param {boolean} overwrite
      * @return {DBTable}
      */
-    mergeTableBy(table : DBTable, column: string, overwrite : boolean = false){
-        let results : DBTable = new this.currentConstructor(this.data);
+    mergeTableBy(table : DBTable<any>, column: string, overwrite : boolean = false){
+        let results : DBTable<rowInterface> = new this.currentConstructor(
+            this.data,
+            {...this._meta, ...table._meta}
+        );
 
         table.data.reverse().forEach(row=>{
             // Are there any rows that already have the same key
@@ -142,9 +204,9 @@ export class DBTable{
     orderBy(column: string, order : "ASC" | "DESC" = "ASC"){
         let factor = order.toLowerCase() === "asc" ? 1 : -1;
 
-        let newData = _.orderBy(this.data, [column], [order.toLowerCase()]);
+        let newData = orderBy(this.data, [column], [order.toLowerCase()]);
 
-        return new this.currentConstructor(newData);
+        return new this.currentConstructor(newData, this._meta);
     }
 
     /**
@@ -153,6 +215,8 @@ export class DBTable{
      * @return {DBTable}
      */
     removeColumn(columnName : string){
+        this._meta.columnNames = [];
+        delete this._meta.columnTypes[columnName];
         this._data.forEach(row=>delete row[columnName]);
         return this;
     }
@@ -165,6 +229,7 @@ export class DBTable{
      */
     select(columns : string[], distinct : boolean = true){
         // Todo: change distinct to require a value in version 0.6.x and default to false in 1.x.x
+        // TODO: support meta changes!!!
         let result = this._data.map((row)=>{
             let newRow = {};
             columns.forEach(column => newRow[column] = row[column]);
@@ -198,10 +263,10 @@ export class DBTable{
         const resultsTable = new DBTable;
 
         //
-        rowsToProcess._data.forEach((row)=>{
+        rowsToProcess._data.forEach((row, index, array)=>{
             let values = row[columnName].split(",");
 
-            values.forEach(value=>{
+            for(const value of values){
                 // Has this value already been registered? If so increment its count
                 const alreadyRegistered = resultsTable
                     .whereColumnEquals("value", value)
@@ -212,7 +277,10 @@ export class DBTable{
                 if(!alreadyRegistered){
                     resultsTable._data.push({value, count: 1});
                 }
-            });
+
+            }
+
+            console.log((100*index/array.length).toFixed(2) + "% done...")
         });
 
         return resultsTable.distinct();
@@ -226,7 +294,7 @@ export class DBTable{
     top(count : number){
         let results = this._data.slice(0, count);
 
-        return new this.currentConstructor(results);
+        return new this.currentConstructor(results, this._meta);
     }
 
     /**
@@ -246,7 +314,7 @@ export class DBTable{
             }
         });
 
-        return new this.currentConstructor(results);
+        return new this.currentConstructor(results, this._meta);
     }
 
     /**
@@ -256,7 +324,7 @@ export class DBTable{
      * @return {DBTable}
      */
     whereColumnEquals(column : string, value : any){
-        return new this.currentConstructor(this._data.filter(row => row[column] == value));
+        return new this.currentConstructor(this._data.filter(row => row[column] == value), this._meta);
     }
 
     /**
@@ -266,7 +334,7 @@ export class DBTable{
      * @return {DBTable}
      */
     whereColumnNotEquals(column : string, value : any){
-        return new this.currentConstructor(this._data.filter(row => row[column] != value));
+        return new this.currentConstructor(this._data.filter(row => row[column] != value), this._meta);
     }
 
     /**
@@ -276,7 +344,7 @@ export class DBTable{
      * @return {this}
      */
     whereColumnGreaterThanEquals(column : string, value : number | string) : this{
-        return new this.currentConstructor(this._data.filter(row => row[column] >= value));
+        return new this.currentConstructor(this._data.filter(row => row[column] >= value), this._meta);
     }
 
     /**
@@ -286,7 +354,7 @@ export class DBTable{
      * @return {this}
      */
     whereColumnLessThanEquals(column : string, value : number | string) : this{
-        return new this.currentConstructor(this._data.filter(row => row[column] <= value));
+        return new this.currentConstructor(this._data.filter(row => row[column] <= value), this._meta);
     }
 
     /**
@@ -296,7 +364,7 @@ export class DBTable{
      * @return {this}
      */
     whereColumnGreaterThan(column : string, value : number | string) : this{
-        return new this.currentConstructor(this._data.filter(row => row[column] > value));
+        return new this.currentConstructor(this._data.filter(row => row[column] > value), this._meta);
     }
 
     /**
@@ -306,7 +374,7 @@ export class DBTable{
      * @return {this}
      */
     whereColumnLessThan(column : string, value : number | string) : this{
-        return new this.currentConstructor(this._data.filter(row => row[column] < value));
+        return new this.currentConstructor(this._data.filter(row => row[column] < value), this._meta);
     }
 
     /***
@@ -314,6 +382,7 @@ export class DBTable{
      * Use DBTable.fromJson(...) instead.
      */
     loadJson(json:string){
+        console.error("loadJson() may be removed in future releases... Use DBTable.fromJson(...) instead.");
         json = JSON.parse(json);
         return new this.currentConstructor(json);
     }
@@ -323,12 +392,16 @@ export class DBTable{
      */
     public static fromJson(json:string){
         const data = JSON.parse(json);
-        return new DBTable(data);
+        if(data.data){
+            return new DBTable(data.data, data.meta);
+        }else {
+            return new DBTable(data);
+        }
     }
 
     loadLZMA(lzma : number[]){
         let json = LZMA.decompress(lzma);
-        return this.loadJson(json);
+        return DBTable.fromJson(json);
     }
 
     loadLZMAStringB64(string : string){
@@ -340,7 +413,14 @@ export class DBTable{
     }
 
     toJSON(pretty : number = 2){
-        return JSON.stringify(this._data, null, pretty as any);
+        return JSON.stringify(
+            {
+                data: this._data,
+                meta: this._meta,
+            },
+            null,
+            pretty
+        );
     }
 
     /**

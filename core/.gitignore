@@ -160,3 +160,5 @@ typings/
 .env
 
 .idea/
+lib
+/package-lock.json
