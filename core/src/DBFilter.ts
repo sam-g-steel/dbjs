@@ -2,29 +2,29 @@
  * Created by Samuel V. Sylvester I on 9/10/2018.
  */
 
-export interface DBFilterEntry{
+export interface DBFilterEntry {
     // Name of the field to filter
-    fieldName: string,
+    fieldName: string;
 
     // Text that represents the value in a human friendly format
-    text: string,
+    text: string;
 
     // TODO: ???
-    value: string | number,
+    value: string | number | boolean;
 }
 
 /**
  * Immutable class that represents values to filter a data table's rows by
  */
 export class DBFilter {
-    private _map : any = {};
+    private _map: any = {};
 
     private _clone() {
         // Create new DBFilter
         let result = new DBFilter();
 
         // Copy over entries
-        result._map = {...this._map};
+        result._map = { ...this._map };
 
         return result;
     }
@@ -36,14 +36,14 @@ export class DBFilter {
      * @param {string} text
      * @return {this}
      */
-    public setField(fieldName:string, value: string | number, text?: string) {
+    public setField(fieldName: string, value: string | number | boolean, text?: string) {
         // Make sure
         if (!fieldName) {
             console.error("fieldName must have a value!");
             return this;
         }
 
-        if(text === undefined && value !== undefined){
+        if (text === undefined && value !== undefined) {
             text = "" + value;
         }
 
@@ -51,7 +51,7 @@ export class DBFilter {
         let result = this._clone();
 
         // Set the field to the new value
-        result._map[fieldName] = {fieldName, text, value};
+        result._map[fieldName] = { fieldName, text, value };
 
         // Return new filter
         if (result.toString() === this.toString()) {
@@ -63,18 +63,14 @@ export class DBFilter {
         }
     }
 
-    public merge(newFilter : DBFilter){
+    public merge(newFilter: DBFilter) {
         //
         const entries = Object.values(newFilter._map) as DBFilterEntry[];
-        let result : DBFilter = this;
+        let result: DBFilter = this;
 
         //
-        for(let entry of entries){
-            result = result.setField(
-                entry.fieldName,
-                entry.value,
-                entry.text
-            );
+        for (let entry of entries) {
+            result = result.setField(entry.fieldName, entry.value, entry.text);
         }
 
         //
@@ -85,18 +81,18 @@ export class DBFilter {
      *
      * @return {string}
      */
-    public toString(){
+    public toString() {
         return JSON.stringify(this._map);
     }
 
-    public toBasicFilter() : any{
+    public toBasicFilter(): any {
         //
         const entries = Object.values(this._map) as DBFilterEntry[];
         const result = {};
 
         //
-        for(let entry of entries){
-            if(entry.value !== undefined) {
+        for (let entry of entries) {
+            if (entry.value !== undefined) {
                 result[entry.fieldName] = entry.value;
             }
         }
@@ -104,19 +100,19 @@ export class DBFilter {
         return result;
     }
 
-    public getEntry(fieldName:string) : DBFilterEntry{
+    public getEntry(fieldName: string): DBFilterEntry {
         return this._map[fieldName];
     }
 
-    public getEntriesAsObject(){
-        return {...this._map};
+    public getEntriesAsObject() {
+        return { ...this._map };
     }
 
-    public getEntriesAsArray(){
+    public getEntriesAsArray() {
         return Object.values(this._map) as DBFilterEntry[];
     }
 
-    public toBasicString(){
+    public toBasicString() {
         return JSON.stringify(this.toBasicFilter());
     }
 }

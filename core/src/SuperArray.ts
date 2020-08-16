@@ -13,7 +13,7 @@ export class SuperArray<t> extends Array<t> {
         super();
 
         // fill array with the data that was passed in
-        for(const element of array){
+        for (const element of array) {
             this.push(element);
         }
     }
@@ -29,7 +29,7 @@ export class SuperArray<t> extends Array<t> {
      * Returns the average value of the elements in the array
      */
     public avg = () => {
-        return this.sum() / (this.length || 1)
+        return this.sum() / (this.length || 1);
     };
 
     /**
@@ -75,7 +75,7 @@ export class SuperArray<t> extends Array<t> {
             res = res > next ? res : next;
         }
 
-        return res as any as number;
+        return (res as any) as number;
     };
 
     /**
@@ -89,13 +89,13 @@ export class SuperArray<t> extends Array<t> {
             res = res < next ? res : next;
         }
 
-        return res as any as number;
+        return (res as any) as number;
     };
 
     public normalize = () => {
         const max = this.max();
         const min = this.min();
-        const range = (max - min) || 1;
+        const range = max - min || 1;
         const result: number[] = [];
 
         for (let i = 0; i < this.length; i++) {
@@ -119,7 +119,7 @@ export class SuperArray<t> extends Array<t> {
         }
 
         return this.map((o, i) => {
-            return this.getClamped(i - shift) as any * multiply + addArray.getClamped(i);
+            return (this.getClamped(i - shift) as any) * multiply + addArray.getClamped(i);
         });
     }
 
@@ -127,7 +127,7 @@ export class SuperArray<t> extends Array<t> {
      * Returns the sum of the elements in the array
      */
     public sum = () => {
-        return this.reduce((a: any, b: any) => a + b ) as any as number;
+        return (this.reduce((a: any, b: any) => a + b) as any) as number;
     };
 
     public toFixed(a) {
@@ -137,8 +137,9 @@ export class SuperArray<t> extends Array<t> {
     /**
      * Returns an array based on the original with only unique values
      */
-    public unique = ()=>{
-        const n = {}, r = [];
+    public unique = () => {
+        const n = {},
+            r = [];
         for (var i = 0; i < this.length; i++) {
             // Use a hash based on the actual data
             // in the object, not the object's memory address or instance id

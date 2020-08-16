@@ -1,14 +1,11 @@
 {
-  "name": "@dbjs/core",
+  "name": "@dbjs/node-tools",
   "version": "1.0.0-alpha.3",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "dependencies": {
-    "atob": "^2.0.3",
-    "btoa": "^1.1.2",
-    "lodash": ">=4.17.10",
-    "lzma": "^2.3.2",
-    "uuid": "^7.0.2"
+    "proper-lockfile": "^4.1.1",
+    "@dbjs/core": "latest"
   },
   "private": false,
   "scripts": {
@@ -17,8 +14,8 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/lodash": ">=4.14.116",
     "@types/node": ">=10.17.27",
+    "@types/proper-lockfile": "^4.1.1",
     "onchange": "^7.0.2",
     "prettier": "2.0.5"
   }
