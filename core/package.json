@@ -1,6 +1,6 @@
 {
   "name": "@dbjs/core",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "dependencies": {

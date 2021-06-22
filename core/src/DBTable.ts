@@ -261,7 +261,7 @@ export class DBTable<rowInterface> {
      * @param columnName
      */
     public listDistinctValues(columnName: string) {
-        const rowsToProcess = this.select([columnName]);
+        const rowsToProcess = this.select([columnName], false);
         const resultsTable = new DBTable<{ value: string; count: number }>();
 
         //
