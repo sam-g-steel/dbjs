@@ -196,7 +196,7 @@ export class DBTable<rowInterface> {
     orderBy(column: keyof rowInterface, order: "ASC" | "DESC" = "ASC") {
         let factor = order.toLowerCase() === "asc" ? 1 : -1;
 
-        let newData = orderBy(this.data, [column], [order.toLowerCase()]);
+        let newData = orderBy(this.data, [column], [order.toLowerCase() as any]);
 
         return new DBTable<rowInterface>(newData, this._meta);
     }
@@ -260,7 +260,7 @@ export class DBTable<rowInterface> {
      * @experimental
      * @param columnName
      */
-    public listDistinctValues(columnName: string) {
+    public listDistinctValues(columnName: string, verbose: boolean = false) {
         const rowsToProcess = this.select([columnName], false);
         const resultsTable = new DBTable<{ value: string; count: number }>();
 
@@ -278,7 +278,7 @@ export class DBTable<rowInterface> {
                 }
             }
 
-            console.log(((100 * index) / array.length).toFixed(2) + "% done...");
+            if (verbose) console.log(((100 * index) / array.length).toFixed(2) + "% done...");
         });
 
         return resultsTable.distinct();

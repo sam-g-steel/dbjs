@@ -1,6 +1,6 @@
 {
   "name": "@dbjs/core",
-  "version": "1.0.0",
+  "version": "1.1.0-alpha.1",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "dependencies": {
@@ -8,12 +8,15 @@
     "btoa": "^1.1.2",
     "lodash": ">=4.17.10",
     "lzma": "^2.3.2",
-    "uuid": "^7.0.2"
+    "uuid": "^7.0.2",
+    "json5": "^2.2.0",
+    "@progressive-promise/core": "^0.9.1"
   },
   "private": false,
   "scripts": {
     "build": "tsc -w",
-    "format code": "prettier --write src/"
+    "format code": "prettier --write src/",
+    "test-db-chunk-top": "node ./tests/chunkTop.js"
   },
   "license": "MIT",
   "devDependencies": {
