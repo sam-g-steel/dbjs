@@ -2,21 +2,21 @@ import { chunk, concat } from "lodash";
 import { DBChunk } from "./DBChunk";
 import { FilterMode, FilterOpp } from "./DBFilterOpps";
 import { DBTable } from "./DBTable";
-import {Timeout} from "@progressive-promise/core"
+import { Timeout } from "@progressive-promise/core";
 
 export class DBChunks<RowType> {
     ///////////////////////////////////////////
     //////////// Static Properties ////////////
 
-    /** Default chunck size */
-    protected static CHUNCK_SIZE = 6;
+    /** Default chunk size */
+    protected static CHUNK_SIZE = 64;
 
     ///////////////////////////////////////////
     //////////////// Properties ///////////////
 
     public chunks: DBChunk<RowType>[];
 
-    /** keeps track of filtering opperations to apply to the data */
+    /** keeps track of filtering operations to apply to the data */
     protected filterStack: FilterOpp<RowType>[] = [];
 
     protected tags: DBTable<{ value: string; count: number }>;
@@ -27,9 +27,9 @@ export class DBChunks<RowType> {
     constructor(table?: DBTable<RowType>) {
         if (table) {
             this.chunks = [];
-            const dataChuncks = chunk(table.data, DBChunks.CHUNCK_SIZE);
+            const dataChunks = chunk(table.data, DBChunks.CHUNK_SIZE);
 
-            for (const data of dataChuncks) {
+            for (const data of dataChunks) {
                 this.chunks.push(new DBChunk(new DBTable(data)));
             }
         }
@@ -40,18 +40,23 @@ export class DBChunks<RowType> {
 
     public async applyFilters() {
         for (const filterOpp of this.filterStack) {
+            //
             if (filterOpp.mode === FilterMode.CHUNK_HAS_TAG) {
                 await this.chunkHasTag(filterOpp.tag);
-            } else if (filterOpp.mode === FilterMode.ROW_FILTER) {
-                const chunks = this.getActiveChuncks();
+            }
+            //
+            else if (filterOpp.mode === FilterMode.ROW_FILTER) {
+                const chunks = this.getActiveChunks();
                 for (const chunk of chunks) {
                     await chunk.applyFilter(filterOpp.filterFunc);
                 }
-            } else if (filterOpp.mode === FilterMode.TOP_ROWS) {
+            }
+            //
+            else if (filterOpp.mode === FilterMode.TOP_ROWS) {
                 let rowsLeft = filterOpp.value;
 
                 // Loop through chunks
-                const chunks = this.getActiveChuncks();
+                const chunks = this.getActiveChunks();
                 for (const chunk of chunks) {
                     if (rowsLeft === 0) {
                         chunk.mask = false;
@@ -65,15 +70,17 @@ export class DBChunks<RowType> {
                         rowsLeft -= count;
                     }
                 }
-            } else if (filterOpp.mode === FilterMode.SKIP_ROWS) {
+            }
+            //
+            else if (filterOpp.mode === FilterMode.SKIP_ROWS) {
                 let rowsLeft = filterOpp.value;
 
                 // Loop through chunks
-                const chunks = this.getActiveChuncks();
+                const chunks = this.getActiveChunks();
                 for (const chunk of chunks) {
-                    if (rowsLeft === 0) {
-                        break;
-                    }
+                    // If there are no more rows to skip break from loop
+                    if (rowsLeft === 0) break;
+
                     const count = await chunk.getFilteredRowCount();
                     if (rowsLeft < count) {
                         await chunk.skip(rowsLeft);
@@ -141,19 +148,19 @@ export class DBChunks<RowType> {
         }
     }
 
-    public skip(ammount: number) {
+    public skip(amount: number) {
         this.filterStack.push({
             mode: FilterMode.SKIP_ROWS,
-            value: ammount,
+            value: amount,
         });
 
         return this;
     }
 
-    public top(ammount: number) {
+    public top(amount: number) {
         this.filterStack.push({
             mode: FilterMode.TOP_ROWS,
-            value: ammount,
+            value: amount,
         });
 
         return this;
@@ -162,16 +169,16 @@ export class DBChunks<RowType> {
     ///////////////////////////////////////////
     ////////////// Other Methods //////////////
 
-    protected getActiveChuncks() {
+    protected getActiveChunks() {
         return this.chunks.filter(chunk => chunk.mask);
     }
 
-    public async getFilteredRowCount(){
-        const activeChuncks = this.getActiveChuncks();
+    public async getFilteredRowCount() {
+        const activeChunks = this.getActiveChunks();
         let rowCount = 0;
-        for (const chunk of activeChuncks) {
+        for (const chunk of activeChunks) {
             rowCount += await chunk.getFilteredRowCount();
-        } 
+        }
 
         return rowCount;
     }
@@ -194,7 +201,7 @@ export class DBChunks<RowType> {
                 tagEntry.count += tag.count;
             }
 
-            // Yeald
+            // Yield
             results = results.orderBy("count", "DESC");
             if (tagsWasEmpty) this.tags = results;
             yield results;
@@ -218,10 +225,9 @@ export class DBChunks<RowType> {
 
             if (!chunk.mask) continue;
 
-            // Does this chunck have the tag
+            // Does this chunk have the tag
             const tags = (await chunk.getMeta()).tags;
-            const hasTag = tags.whereColumnEquals("value", tag).count > 0;
-            chunk.mask = hasTag;
+            chunk.mask = tags.whereColumnEquals("value", tag).count > 0;
         }
 
         return this;
@@ -232,15 +238,15 @@ export class DBChunks<RowType> {
      * @param reset clears filters after creating the returned array - defaults to false
      */
     public async toArray(reset: boolean = false) {
-        const dataChuncks: RowType[][] = [];
+        const dataChunks: RowType[][] = [];
         for (const chunk of this.chunks) {
-            if (chunk.mask) dataChuncks.push(await chunk.getFilteredData());
+            if (chunk.mask) dataChunks.push(await chunk.getFilteredData());
         }
 
         if (reset) this.resetFilters();
 
         // @ts-ignore
-        return concat(...dataChuncks);
+        return concat(...dataChunks);
     }
 
     /**

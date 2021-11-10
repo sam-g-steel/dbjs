@@ -2,17 +2,19 @@
 import * as json5 from "json5";
 import { DBTable } from "./DBTable";
 
+export interface DBChunkMeta {
+    tags?: DBTable<{ value: string; count: number }>;
+    rowCount?: number;
+    lastUpdate: number;
+}
+
 export class DBChunk<RowType> {
     ///////////////////////////////////////////
     //////////////// Properties ///////////////
 
     public mask: boolean = true;
 
-    protected meta: {
-        tags?: DBTable<{ value: string; count: number }>;
-        rowCount?: number;
-        lastUpdate: number;
-    };
+    protected meta: DBChunkMeta;
 
     protected filteredTable: DBTable<RowType> | undefined;
 
@@ -38,7 +40,7 @@ export class DBChunk<RowType> {
         this.filteredTable = filteredTable.skip(count);
     }
 
-    /** Returns the metadata table behind this chunck */
+    /** Returns the metadata table behind this chunk */
     public async getMeta() {
         if (this.meta.tags === undefined) await this.updateTagMetadata();
         if (this.meta.rowCount === undefined) await this.updateCount();
@@ -55,42 +57,57 @@ export class DBChunk<RowType> {
         return this.meta.rowCount;
     }
 
-    /** Returns the data rows behind this chunck */
+    /** Returns the data rows behind this chunk */
     public async getData() {
         return (await this.getDataTable()).data;
     }
 
-    /** Returns the data rows behind this chunck */
+    /** Returns the data rows behind this chunk */
     public async getFilteredData() {
         return (await this.getFilteredDataTable()).data;
     }
 
-    /** Returns the data rows behind this chunck */
+    /** Returns the data rows behind this chunk */
     public async getFilteredDataTable() {
         return this.filteredTable || (await this.getDataTable());
     }
 
-    /** Returns the data rows behind this chunck */
-    public async resetFilter() {
+    /** Returns the data rows behind this chunk */
+    public resetFilter() {
         delete this.filteredTable;
         this.mask = true;
     }
 
-    /** Returns the data table behind this chunck */
+    /** Returns the data table behind this chunk */
     public async getDataTable() {
         return this.table;
     }
 
-    public async toJsonObject() {
+    public async toJsonObject({ noData }: { noData: boolean } = { noData: false }) {
         const meta = await this.getMeta();
 
-        return {
-            data: await this.getData(),
+        const result: {
+            meta: {
+                tags: {
+                    value: string;
+                    count: number;
+                }[];
+                rowCount?: number;
+                lastUpdate: number;
+            };
+            data?: RowType[];
+        } = {
             meta: {
                 ...meta,
                 tags: meta?.tags?.data,
             },
         };
+
+        if (!noData) {
+            result.data = await this.getData();
+        }
+
+        return result;
     }
 
     public async toJsonString(space: number = 0) {
