@@ -1,28 +1,36 @@
 {
   "name": "@dbjs/core",
-  "version": "1.1.0-alpha.2",
+  "version": "1.1.0-alpha.4",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "dependencies": {
     "@progressive-promise/core": "^0.9.1",
-    "atob": "^2.0.3",
-    "btoa": "^1.1.2",
+    "atob": "^2.1.2",
+    "btoa": "^1.2.1",
     "json5": "^2.2.0",
     "lodash": ">=4.17.10",
     "lzma": "^2.3.2",
-    "uuid": "^7.0.2"
+    "uuid": "^8.3.2"
   },
   "private": false,
   "scripts": {
     "build": "tsc -w",
     "format code": "prettier --write src/",
-    "test-db-chunk-top": "node ./tests/chunkTop.js"
+    "test-db-chunk-top": "node ./tests/chunkTop.js",
+    "test": "jest"
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^27.0.3",
     "@types/lodash": ">=4.14.116",
     "@types/node": ">=10.17.27",
+    "jest": "^27.4.5",
+    "node-notifier": "^10.0.0",
     "onchange": "^7.0.2",
     "prettier": "2.0.5"
+  },
+  "jest": {
+    "testPathIgnorePatterns": ["/src"],
+    "collectCoverage": true
   }
 }

@@ -170,7 +170,7 @@ export class DBChunks<RowType> {
     ////////////// Other Methods //////////////
 
     protected getActiveChunks() {
-        return this.chunks.filter(chunk => chunk.mask);
+        return this.chunks?.filter(chunk => chunk.mask) || [];
     }
 
     public async getFilteredRowCount() {
@@ -217,6 +217,17 @@ export class DBChunks<RowType> {
         while (!(await gen.next()).done) {
             await Timeout(5);
         }
+
+        return this.tags;
+    }
+
+    async genColumnIndexes(columns: (keyof RowType)[], updateIndexes: boolean = false) {
+        for (let i = 0; i < this.chunks.length; i++) {
+            const chunk = await this.chunks[i];
+
+            await chunk.getColumnIndexes(columns, updateIndexes);
+            await Timeout(15);
+        }
     }
 
     protected async chunkHasTag(tag: string) {
@@ -239,7 +250,7 @@ export class DBChunks<RowType> {
      */
     public async toArray(reset: boolean = false) {
         const dataChunks: RowType[][] = [];
-        for (const chunk of this.chunks) {
+        for (const chunk of this.chunks || []) {
             if (chunk.mask) dataChunks.push(await chunk.getFilteredData());
         }
 

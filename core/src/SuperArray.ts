@@ -40,6 +40,10 @@ export class SuperArray<t> extends Array<t> {
         return this[0] as t;
     };
 
+    /**
+     * Returns the element at the indexes location
+     * @param index
+     */
     public getClamped(index) {
         const length = this.length;
 

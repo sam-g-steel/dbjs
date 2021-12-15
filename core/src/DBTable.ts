@@ -194,7 +194,7 @@ export class DBTable<rowInterface> {
      * @param order
      */
     orderBy(column: keyof rowInterface, order: "ASC" | "DESC" = "ASC") {
-        let factor = order.toLowerCase() === "asc" ? 1 : -1;
+        // let factor = order.toLowerCase() === "asc" ? 1 : -1;
 
         let newData = orderBy(this.data, [column], [order.toLowerCase() as any]);
 
@@ -203,8 +203,6 @@ export class DBTable<rowInterface> {
 
     /**
      *
-     * @param column
-     * @param order
      */
     shuffle() {
         let newData = this._data.sort(() => (Math.random() > 0.5 ? -1 : 1));
@@ -216,10 +214,10 @@ export class DBTable<rowInterface> {
      * @param {string} columnName
      * @return {DBTable}
      */
-    removeColumn(columnName: string) {
+    removeColumn(columnName: keyof rowInterface | string) {
         this._meta.columnNames = [];
-        delete this._meta.columnTypes[columnName];
-        this._data.forEach(row => delete row[columnName]);
+        if (this?._meta?.columnTypes) delete this._meta.columnTypes[columnName];
+        this._data.forEach(row => delete row[columnName as string]);
         return this;
     }
 
