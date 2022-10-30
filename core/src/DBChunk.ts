@@ -1,5 +1,7 @@
 // import { ImageMetadata } from "@action-home/main-server/dist/ImageMetadata";
 import * as json5 from "json5";
+import _ = require("lodash");
+import { getTagsFromRow } from "./util";
 import { DBTable } from "./DBTable";
 
 export interface DBChunkMeta<RowType> {
@@ -15,15 +17,18 @@ export class DBChunk<RowType> {
 
     public mask: boolean = true;
 
-    protected meta: DBChunkMeta<RowType>;
+    protected meta?: DBChunkMeta<RowType>;
 
-    protected filteredTable: DBTable<RowType> | undefined;
+    protected filteredTable?: DBTable<RowType> | undefined;
 
-    protected table: DBTable<RowType>;
+    protected table?: DBTable<RowType>;
 
-    constructor(table: DBTable<RowType>) {
-        this.table = table;
-        this.meta = { lastUpdate: Date.now(), indexes: {} };
+    constructor(table?: DBTable<RowType>) {
+        if (!table) {
+        } else {
+            this.table = table;
+            this.meta = { lastUpdate: Date.now(), indexes: {}, rowCount: table.count };
+        }
     }
 
     async getColumnIndex(column: keyof RowType, updateIndexes: boolean = false) {
@@ -40,7 +45,7 @@ export class DBChunk<RowType> {
             this.meta = { ...this.meta, ...newMeta };
         }
 
-        return this.meta.indexes[column as string];
+        return this?.meta?.indexes[column as string];
     }
 
     async getColumnIndexes(columns: (keyof RowType)[], updateIndexes: boolean = false) {
@@ -75,6 +80,10 @@ export class DBChunk<RowType> {
         return this.meta;
     }
 
+    public touch(ms: number = Date.now()) {
+        this.meta.lastUpdate = ms;
+    }
+
     public async getFilteredRowCount() {
         if (this.filteredTable) return this.filteredTable.count;
         return await this.getRowCount();
@@ -87,7 +96,7 @@ export class DBChunk<RowType> {
 
     /** Returns the data rows behind this chunk */
     public async getData() {
-        return (await this.getDataTable()).data;
+        return (await this.getDataTable())?.data || [];
     }
 
     /** Returns the data rows behind this chunk */
@@ -127,7 +136,7 @@ export class DBChunk<RowType> {
         } = {
             meta: {
                 ...meta,
-                tags: meta?.tags?.data,
+                tags: meta?.tags?.data || [],
             },
         };
 
@@ -144,20 +153,27 @@ export class DBChunk<RowType> {
 
     async updateTagMetadata() {
         try {
-            this.meta.tags = (await this.getData())
+            const newTags = (await this.getData())
                 // @ts-ignore
-                .map(img => img.getAnnotations().filter(a => !a.tag.includes("Discription")))
+                .map(img => getTagsFromRow(img).filter(a => !a.tag.includes("Discription")))
                 .reduce((a, b) => a.union(b))
                 .listDistinctValues("tag")
                 .orderBy("count", "DESC");
-            this.meta.lastUpdate = Date.now();
+
+            if (!_.isEqual(this.meta.tags, newTags)) {
+                this.meta.tags = newTags;
+                this.meta.lastUpdate = Date.now();
+            }
         } catch (error) {
-            // console.warn("")
+            console.warn(error);
         }
     }
 
     async updateCount() {
-        this.meta.rowCount = (await this.getDataTable()).count;
-        this.meta.lastUpdate = Date.now();
+        const newCount = (await this.getDataTable()).count;
+        if (newCount !== this.meta.rowCount) {
+            this.meta.rowCount = newCount;
+            this.meta.lastUpdate = Date.now();
+        }
     }
 }

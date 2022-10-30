@@ -3,6 +3,7 @@ export enum FilterMode {
     ROW_FILTER,
     SKIP_ROWS,
     TOP_ROWS,
+    MAX_TIME,
 }
 interface ChunkFilterOpp {
     mode: FilterMode.CHUNK_HAS_TAG;
@@ -19,4 +20,10 @@ interface WindowFilterOpp {
     value: number;
 }
 
-export type FilterOpp<RowType> = ChunkFilterOpp | RowFilterOpp<RowType> | WindowFilterOpp;
+// interface TimeFilterOpp {
+//     mode: FilterMode.MAX_TIME;
+//     /** Time limit in milliseconds */
+//     value: number;
+// }
+
+export type FilterOpp<RowType> = ChunkFilterOpp | RowFilterOpp<RowType> | WindowFilterOpp /*| TimeFilterOpp*/;

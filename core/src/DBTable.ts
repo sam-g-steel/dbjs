@@ -39,7 +39,7 @@ export class DBTable<rowInterface> {
      * @param metaData
      * @param formatter
      */
-    constructor(jsonTable: any[] = [], metaData?: any, formatter?: (row: any) => rowInterface) {
+    constructor(jsonTable: rowInterface[] = [], metaData?: any, formatter?: (row: any) => rowInterface) {
         // Copy meta data
         this._meta = { ...metaData };
         if (formatter) {

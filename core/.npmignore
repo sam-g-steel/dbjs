@@ -6,3 +6,8 @@
 
 src
 tests
+.idea
+coverage
+.prettierrc.json
+.prettierignore
+tsconfig.json

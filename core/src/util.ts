@@ -1,3 +1,5 @@
+import { DBTable } from "./DBTable";
+
 String.prototype["hashCode"] = function () {
     let hash = 0;
     if (this.length == 0) return hash;
@@ -65,4 +67,15 @@ export function StringToUint8(string: string) {
     }
 
     return uint;
+}
+
+export function getTagsFromRow(row: any): DBTable<{ tag: string }> {
+    if (row.tags && typeof row.tags === "string") {
+        return new DBTable(row.tags.split(",").map(a => ({ tag: a })));
+    } else if (row.getAnnotations) {
+        return row?.getAnnotations();
+    } else {
+        console.warn("Looks like we are trying get tags on an object that ising supported!");
+        return new DBTable();
+    }
 }
